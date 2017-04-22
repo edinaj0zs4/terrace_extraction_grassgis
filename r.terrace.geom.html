@@ -1,0 +1,34 @@
+<h2>DESCRIPTION</h2>
+
+<i>r.terrace.geom</i> flexible terrain analysing tool is developed for the delineation and quantifiable analysis of terrace remnants. <br>
+The algorithm determines cells potentially belonging to terrace surfaces based on local slope characteristics and a minimum area size threshold.
+
+<h2>NOTES</h2>
+
+The algorithm cuts up the area into parallel sections in flow direction and determines cells belonging to terrace-like surfaces. <br>
+As a result an output report is created that contains a histogram of altitudes, a swath profile of the landscape, scatter plots <br>
+to represent the relation of the relative elevations and slope values in the analysed sections and two final plots showing the <br>
+longitudinal profile of the river with the determined height ranges of terrace levels and a histogram of the values.
+
+<h3>Dependencies:</h3>
+
+R 3.x (packages: spgrass6/rgrass7, ggplot2, data.table) & r.geomorphon add-on
+
+<h2>SEE ALSO</h2>
+
+<em>
+<a href="r.geomorphon.html">r.geomorphon</a>
+</em>
+
+<h2>REFERENCES</h2>
+
+<ul>
+<li>Demoulin, A., Bovy, B., Rixhon, G., Cornet, Y., 2007. An automated method to extract fluvial terraces from digital elevation models. The Vesdre valley, a case study in Eastern Belgium. In: Geomorphology 91 (1-2), pp. 51-64.</li>
+</ul>
+
+<h2>AUTHORS</h2>
+Edina Jozsa<br>
+<i>University of Pécs (Hungary)</i><br>
+
+<p>
+<i>Last changed: $Date: 2017-04-22 (Sat, 22 April 2017) $</i>

@@ -204,7 +204,7 @@ def main():
     if not incheck['file']:
         grass.fatal("Raster map <%s> not found" % elevation)
     grass.use_temp_region()
-    grass.run_command('g.region', zoom=elevation)
+    grass.run_command('g.region', rast=elevation)
     gregion = grass.region()
     res = int(round(gregion['nsres']))
 
@@ -258,9 +258,9 @@ def main():
     right = flags['r']
     dir = str(options['flowdir'])
     if left or right:
-        grass.run_command('g.region', zoom=watercourse)
+        grass.run_command('g.region', rast=watercourse)
         waterarea = grass.region(watercourse)
-        grass.run_command('g.region', zoom=elevation)
+        grass.run_command('g.region', rast=elevation)
         elevarea = grass.region(elevation)
         if left: ## user set left side to analyse
             if dir == 'NS': ## side depends on flow direction
@@ -334,7 +334,7 @@ def main():
             elevation = side_elev
 
 ### Set the area which should be exported by creating a MASK from the elevation and watercourse
-    grass.run_command('g.region', zoom=elevation)
+    grass.run_command('g.region', rast=elevation)
     elevarea = grass.region(elevation)
     if dir == 'NS' or  'SN':
         N = int(elevarea.n)
@@ -349,13 +349,18 @@ def main():
         W = int(elevarea.w)
         grass.run_command('g.region', n=N, s=S, e=E, w=W, flags='a')
     grass.mapcalc('MASK = if($elevation > 0 ||| $watercourse > 0, 1, null())', elevation=elevation, watercourse=watercourse)
+    grass.run_command('g.region', rast='MASK')
 
 ### Prepare output and RUN R SCRIPT
     report = str(options['report'])
     if report.split('.')[-1] != 'pdf':
         grass.fatal("File type for output report is not pdf")
     terrace_map = str(options['terrace_map'])
+
     levels = str(options['terrlevel'])
+
+    outputdata = os.path.join(os.path.dirname(report), 'tempout.txt')
+    grass.run_command('r.stats', input=(elevation, slope, watercourse), output=outputdata, separator='space', flags='1gN') #exporting elevation, slope and watercourse altitude values, omitting cells with missing data
 
     grassversion = grass.version()
     grassversion = grassversion.version[:1]

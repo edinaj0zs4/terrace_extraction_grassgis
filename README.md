@@ -29,7 +29,7 @@ This README provides the information to install r.terrace.geom.
        * otherwise the tool will inform you to put it there
        * tool will automatically install necessary packages
 
-4.  Open GRASS GIS and run command r.tg.geom - the tool should work and you should see the available information on manual page
+4.  Open GRASS GIS and run command r.terrace.geom - the tool should work and you should see the available information on manual page
 
 #### Notes:
 **under development**<br>

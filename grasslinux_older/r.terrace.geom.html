@@ -1,0 +1,153 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>GRASS GIS manual: r.terrace.geom</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" href="grassdocs.css" type="text/css">
+</head>
+<body bgcolor="white">
+<div id="container">
+
+<a href="file:///usr/lib/grass72/docs/html/index.html"><img src="grass_logo.png" alt="GRASS logo"></a>
+<hr class="header">
+
+<h2>NAME</h2>
+<em><b>r.terrace.geom</b></em>  - Extract terraces from DEM
+<h2>KEYWORDS</h2>
+<a href="file:///usr/lib/grass72/docs/html/raster.html">raster</a>, <a href="file:///usr/lib/grass72/docs/html/topic_terrain.html">terrain</a>, <a href="file:///usr/lib/grass72/docs/html/keywords.html#geomorphology">geomorphology</a>, <a href="file:///usr/lib/grass72/docs/html/keywords.html#terraces">terraces</a>, <a href="file:///usr/lib/grass72/docs/html/keywords.html#landform">landform</a>
+<h2>SYNOPSIS</h2>
+<div id="name"><b>r.terrace.geom</b><br></div>
+<b>r.terrace.geom --help</b><br>
+<div id="synopsis"><b>r.terrace.geom</b> [-<b>tfrl</b>] <b>elevation</b>=<em>name</em>  [<b>slope_percent</b>=<em>name</em>]   [<b>limit</b>=<em>integer</em>]  <b>raster_water</b>=<em>name</em> <b>flowdir</b>=<em>string</em>  [<b>azimuth</b>=<em>integer</em>]  <b>report</b>=<em>name</em> <b>terrace_map</b>=<em>name</em>  [<b>terrlevel</b>=<em>string</em>[,<i>string</i>,...]]   [--<b>overwrite</b>]  [--<b>help</b>]  [--<b>verbose</b>]  [--<b>quiet</b>]  [--<b>ui</b>] 
+</div>
+
+<div id="flags">
+<h3>Flags:</h3>
+<dl>
+<dt><b>-t</b></dt>
+<dd>Remove valleys of tributaries based on geomorphons map</dd>
+
+<dt><b>-f</b></dt>
+<dd>Filter slope map</dd>
+
+<dt><b>-r</b></dt>
+<dd>Analyse right bank area (set only if elevation is total watershed)</dd>
+
+<dt><b>-l</b></dt>
+<dd>Analyse left bank area (set only if elevation is total watershed)</dd>
+
+<dt><b>--overwrite</b></dt>
+<dd>Allow output files to overwrite existing files</dd>
+<dt><b>--help</b></dt>
+<dd>Print usage summary</dd>
+<dt><b>--verbose</b></dt>
+<dd>Verbose module output</dd>
+<dt><b>--quiet</b></dt>
+<dd>Quiet module output</dd>
+<dt><b>--ui</b></dt>
+<dd>Force launching GUI dialog</dd>
+</dl>
+</div>
+
+<div id="parameters">
+<h3>Parameters:</h3>
+<dl>
+<dt><b>elevation</b>=<em>name</em>&nbsp;<b>[required]</b></dt>
+<dd>Name of input elevation model</dd>
+
+<dt><b>slope_percent</b>=<em>name</em></dt>
+<dd>Name of input slope percent map</dd>
+
+<dt><b>limit</b>=<em>integer</em></dt>
+<dd>Altitude limit for terrace extraction (meter a.s.l.)</dd>
+<dd>Default: <em>999</em></dd>
+
+<dt><b>raster_water</b>=<em>name</em>&nbsp;<b>[required]</b></dt>
+<dd>Name of input raster watercourse map (prepare with v.to.rast)</dd>
+
+<dt><b>flowdir</b>=<em>string</em>&nbsp;<b>[required]</b></dt>
+<dd>General flow direction of the watercourse</dd>
+<dd>Options: <em>NS,  SN,  EW,  WE</em></dd>
+
+<dt><b>azimuth</b>=<em>integer</em></dt>
+<dd>Azimuth to north in degrees</dd>
+<dd>Default: <em>999</em></dd>
+
+<dt><b>report</b>=<em>name</em>&nbsp;<b>[required]</b></dt>
+<dd>Name for output report (path\to\name.pdf)</dd>
+
+<dt><b>terrace_map</b>=<em>name</em>&nbsp;<b>[required]</b></dt>
+<dd>Name for output terrace map</dd>
+
+<dt><b>terrlevel</b>=<em>string[,<i>string</i>,...]</em></dt>
+<dd>Altitude ranges of terrace levels seperated by comma (e.g. 100,105,107,111)</dd>
+<dd>Default: <em>999,999</em></dd>
+
+</dl>
+</div>
+<div class="toc">
+<h4 class="toc">Table of contents</h4>
+<ul class="toc">
+    <li class="toc"><a href="#description" class="toc">DESCRIPTION</a></li>
+    <li class="toc"><a href="#notes" class="toc">NOTES</a>
+    <ul class="toc">
+        <li class="toc"><a href="#dependencies:" class="toc">Dependencies:</a></li>
+    </ul></li>
+    <li class="toc"><a href="#see-also" class="toc">SEE ALSO</a></li>
+    <li class="toc"><a href="#references" class="toc">REFERENCES</a></li>
+    <li class="toc"><a href="#authors" class="toc">AUTHORS</a></li>
+</ul>
+</div>
+<h2><a name="description">DESCRIPTION</a></h2>
+
+<i>r.terrace.geom</i> flexible terrain analysing tool is developed for the delineation and quantifiable analysis of terrace remnants. <br>
+The algorithm determines cells potentially belonging to terrace surfaces based on local slope characteristics and a minimum area size threshold.
+
+<h2><a name="notes">NOTES</a></h2>
+
+The algorithm cuts up the area into parallel sections in flow direction and determines cells belonging to terrace-like surfaces. <br>
+As a result an output report is created that contains a histogram of altitudes, a swath profile of the landscape, scatter plots <br>
+to represent the relation of the relative elevations and slope values in the analysed sections and two final plots showing the <br>
+longitudinal profile of the river with the determined height ranges of terrace levels and a histogram of the values.
+
+<h3><a name="dependencies:">Dependencies:</a></h3>
+
+R 3.x (packages: spgrass6/rgrass7, ggplot2, data.table) & r.geomorphon add-on
+
+<h2><a name="see-also">SEE ALSO</a></h2>
+
+<em>
+<a href="r.geomorphon.html">r.geomorphon</a>
+</em>
+
+<h2><a name="references">REFERENCES</a></h2>
+
+<ul>
+<li>Demoulin, A., Bovy, B., Rixhon, G., Cornet, Y., 2007. An automated method to extract fluvial terraces from digital elevation models. The Vesdre valley, a case study in Eastern Belgium. In: Geomorphology 91 (1-2), pp. 51-64.</li>
+</ul>
+
+<h2><a name="authors">AUTHORS</a></h2>
+Edina Jozsa<br>
+<i>University of Pécs (Hungary)</i><br>
+
+<p>
+<i>Last changed: $Date: 2017-04-22 (Sat, 22 April 2017) $</i><h2>SOURCE CODE</h2>
+<p>Available at: <a href="https://trac.osgeo.org/grass/browser/grass/branches/releasebranch_7_2/tmp/grass7-eprecskedi-2804/tmpyeHZcd/r.terrace.geom">r.terrace.geom source code</a> (<a href="https://trac.osgeo.org/grass/log/grass/branches/releasebranch_7_2/tmp/grass7-eprecskedi-2804/tmpyeHZcd/r.terrace.geom">history</a>)</p>
+<hr class="header">
+<p>
+<a href="file:///usr/lib/grass72/docs/html/index.html">Main index</a> |
+<a href="file:///usr/lib/grass72/docs/html/raster.html">Raster index</a> |
+<a href="file:///usr/lib/grass72/docs/html/topics.html">Topics index</a> |
+<a href="file:///usr/lib/grass72/docs/html/keywords.html">Keywords index</a> |
+<a href="file:///usr/lib/grass72/docs/html/graphical_index.html">Graphical index</a> |
+<a href="file:///usr/lib/grass72/docs/html/full_index.html">Full index</a>
+</p>
+<p>
+&copy; 2003-2016
+<a href="http://grass.osgeo.org">GRASS Development Team</a>,
+GRASS GIS 7.2.0 Reference Manual
+</p>
+
+</div>
+</body>
+</html>

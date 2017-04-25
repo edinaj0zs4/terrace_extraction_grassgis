@@ -9,7 +9,7 @@
 		FLOWDIR <- args[5]
 		AZIMUTH <- as.numeric(args[6])
 		REPORT <- args[7]
-		TERRACE_MAP <- args[8]
+		TERRACEMAP.name <- args[8]
         LEVELS <- args[9]
         grassversion <- as.numeric(args[10])
 ##Setting working directory for output files
@@ -68,8 +68,7 @@ if (Sys.info()["sysname"] != "Windows") {
 
 #
 #
-##Export data from maps and read it as data.table
-execGRASS("r.stats", input=c(ELEVATION,SLOPE,WATERCOURSE), output="tempout.txt", separator="space", flags=c("1", "g", "N", "overwrite")) #exporting elevation, slope and watercourse altitude values, omitting cells with missing data
+##Read data from maps as data.table
 VALUES <- fread("tempout.txt", header=FALSE, sep=" ", col.names=c("X","Y","ELEVATION","SLOPE","WATERCOURSE"), na.strings="*") #read data in data.table and name columns
 #
 ##Prepare data
@@ -78,6 +77,8 @@ WATERCOURSE.data <- data.table(X=VALUES$X, Y=VALUES$Y, WATERCOURSE=VALUES$WATERC
 WATERCOURSE.data <- WATERCOURSE.data[complete.cases(WATERCOURSE.data)]
 VALUES[, WATERCOURSE:=NULL]
 VALUES <- VALUES[complete.cases(VALUES), ] #remove lines that only had watercourse elevations + values affected by slope calculation edge effect
+RESOLUTION <- as.numeric(round(VALUES[2,X] - VALUES[1,X]))
+#
 #Getting relative elevations according to flow direction
 if (FLOWDIR == "NS" | FLOWDIR == "SN") {
     WATERCOURSE.data[, WATERCOURSE_STRAIGHT:=mean(WATERCOURSE), by=Y] #handle meandering watercourse
@@ -121,14 +122,6 @@ if (FLOWDIR == "NS" | FLOWDIR == "SN") {
 #
 VALUES[, RELEV:=round(RELEV, digits=0)] #slope characteristics shall be analysed per every meter
 VALUES[, SLOPE:=round(SLOPE, digits=1)] #filtered slopes are rounded to one 
-##Subset data if there was an altitude limit set for the terrace extraction
-if (LIMIT != 999){ 
-VALUES <- VALUES[RELEV <= LIMIT]
-}else{
-LIMIT <- max(VALUES$ELEVATION)}
-#
-RESOLUTION <- as.numeric(round(VALUES[2,X] - VALUES[1,X]))
-#
 ##Recalculate coordinates if azimuth was set *calculation based on Telbisz, T. et al. 2011 SwathCalc tool
 FLOWDIR_DICT <- data.table(USER=c("NS","SN","EW","WE"), FROMNORTH=c(0,180,90,270)) # Always rotate the map to north, better handling further on
 if (AZIMUTH != 999){
@@ -170,8 +163,11 @@ if (AZIMUTH != 999){
 #
 ###Defining thresholds of area and mean slope for altitudes based on topography of total study area
 ##Selecting cells with slope less than 13% and finding area ratio for potential/flat elevations
-RELEV_ALL <- VALUES[, .N, by=RELEV]
-RELEV_FLAT <- VALUES[SLOPE <= 13, .(.N, mean(SLOPE), sd(SLOPE)), by=RELEV]
+#Subset data if there was an altitude limit set for the terrace extraction
+if (LIMIT != 999){ 
+RELEV_ALL <- VALUES[ELEVATION <= LIMIT, .N, by=RELEV]
+RELEV_FLAT <- VALUES[ELEVATION <= LIMIT & SLOPE <= 13, .(.N, mean(SLOPE), sd(SLOPE)), by=RELEV]}
+#
 setkey(RELEV_FLAT, RELEV)[RELEV_ALL, RATE:=N/RELEV_ALL$N*100] #based on the RELEV values the proportion of flat cells in a given altitude is calculated
 setnames(RELEV_FLAT, old=c("RELEV","COUNT","MEAN","SD","RATE"))
 RELEV_FLAT[RELEV_FLAT$MEAN < 1.2, MEAN:=1.2] #slopes under 0.7 degrees/1.2 percent [perfect plain] are too flat, misleading the threshold
@@ -256,6 +252,8 @@ for (i in 1:piece) {
     SECTIONymax <- AREAymax+section-i*section/2
     SECTIONymin <- AREAymax-i*section/2
 TERRACE_SECT <- VALUES[VALUES$Y > SECTIONymin & VALUES$Y <= SECTIONymax]
+if (LIMIT != 999){ 
+TERRACE_SECT <- TERRACE_SECT[ELEVATION <= LIMIT]}
     SECTIONxmax <- max(TERRACE_SECT$X, na.rm=TRUE)
     SECTIONxmin <- min(TERRACE_SECT$X, na.rm=TRUE)
 MINIMUM <- TERRACE_SECT[, min(SLOPE), by=RELEV]
@@ -317,7 +315,7 @@ PLOT8_12 <- PLOT8_12 +
 PLOT8_12 <- PLOT8_12 +
     scale_y_continuous(sec.axis=sec_axis(~.*0.13, name="Slope percent (%)"))
 PLOT8_12 <- PLOT8_12 +
-    ggtitle( paste ("Potential terrace surfaces (Rel. elev. & Mean slope(%)", i, "X=",trunc(SECTIONxmin),":",trunc(SECTIONxmax),", "," Y=", trunc(SECTIONymin),":",trunc(SECTIONymax), sep="")) +
+    ggtitle( paste ("Potential terrace surfaces (Rel. elev. & Mean slope(%)", i, "X=",trunc(SECTIONx_old_min),":",trunc(SECTIONx_old_max),", "," Y=", trunc(SECTIONy_old_min),":",trunc(SECTIONy_old_max), sep="")) +
     theme(text = element_text(size=14), plot.title=element_text(hjust=0.5), axis.text = element_text(size=14), axis.title=element_text(size=14), panel.background = element_rect(fill="whitesmoke", color="black"), panel.grid.minor = element_blank()) +
     xlim(0, xmaxFLAT) + labs(x="Potential rel. elev. (m)", y="Proportion (%)")
 PLOT8_12 <- PLOT8_12 +
@@ -390,7 +388,7 @@ PLOT14 <- PLOT14 +
     ggtitle("Terrace-like surfaces along the long profile of the watercourse") +
     theme(text = element_text(size=14), plot.title=element_text(hjust=0.5), axis.text = element_text(size=14), axis.title=element_text(size=14), panel.background = element_rect(fill="whitesmoke", color="black"), panel.grid.major= element_line(), panel.grid.minor = element_blank())
 PLOT14 <- PLOT14 +
-    geom_point(data=TERRACES.plotdata, aes(x=distWATER, y=BINNED, colour=RELEV), shape=19, size=3, alpha=0.5) + scale_colour_gradientn(colours=terrain.colors(8), name="elevations a.s.l. (m)")
+    geom_point(data=TERRACES.plotdata, aes(x=distWATER, y=BINNED, colour=RELEV), shape=19, size=3, alpha=0.5) + scale_colour_gradientn(colours=terrain.colors(8), name="relative elevation (m)")
 PLOT14 <- PLOT14 +
     theme(legend.position="bottom", legend.title=element_text(size=11), legend.text=element_text(size=11))
 print(PLOT14)
@@ -401,7 +399,7 @@ dev.off()
 TERRACESfile <-  file.path(dirname(REPORT), "tempmap.txt")
 TERRACEMAP <- data.table(TERRACES$OLD_X, TERRACES$OLD_Y, TERRACES$ELEVATION)
 write.table(TERRACEMAP, file=TERRACESfile, row.names=FALSE, col.names=FALSE)
-execGRASS("r.in.xyz", input=TERRACESfile, output=paste("terracemap_", ELEVATION, sep=""), separator="space")
+execGRASS("r.in.xyz", input=TERRACESfile, output=TERRACEMAP.name, separator="space")
 file.remove("tempout.txt")
 file.remove(TERRACESfile)
 sink()

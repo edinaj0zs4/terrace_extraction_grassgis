@@ -38,6 +38,12 @@ This is part of my PhD research regarding DEM/DSM based geomorphological mapping
 The tool works, but the codes and possibly the algorithm could be further improved.
 
 #### Output examples based on artificial terrain:
+![thresholds](https://cloud.githubusercontent.com/assets/25442728/25378225/16ff81a6-29aa-11e7-9b05-32c30b0096c0.png)
+![swathprofile]https://cloud.githubusercontent.com/assets/25442728/25378231/1bed7aba-29aa-11e7-819d-a7709f4b1ca3.png
+![scatter](https://cloud.githubusercontent.com/assets/25442728/25378240/20dc0dac-29aa-11e7-904f-f7bad250d481.png)
+![selection](https://cloud.githubusercontent.com/assets/25442728/25378242/23c6de98-29aa-11e7-9841-75e4e457693d.png)
+![frequency](https://cloud.githubusercontent.com/assets/25442728/25378247/26a8c7f2-29aa-11e7-95aa-a58bac1c18da.png)
+![longprof](https://cloud.githubusercontent.com/assets/25442728/25378249/2979f136-29aa-11e7-99bd-749c07640b67.png)
 
 #### Acknowledgements:
 The author would like to express her gratitude for the colleagues of the Department of Physical and Environmental Geography for the professional advices on the project and the support of the Doctoral School of Earth Sciences, University of Pécs. The present scientific contribution is dedicated to the 650th anniversary of the foundation of the University of Pécs.

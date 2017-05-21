@@ -225,7 +225,7 @@ def main():
         grass.message(_("Low-pass filter on slope percent map"))
         slope_filter = str(slope + '_filter')
         filter_size = round(150/res)
-        if filter_size/2 == 0:
+        if filter_size%2 == 0:
             filter_size = filter_size + 1
         grass.run_command('r.neighbors', input=slope, output=slope_filter, method='minimum', size=int(filter_size), flags='c')
         slope = slope_filter

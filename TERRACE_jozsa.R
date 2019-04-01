@@ -37,7 +37,7 @@ if (Sys.info()["sysname"] != "Windows") {
 	if (grassversion == 7) {
 			checkinstall <- suppressWarnings(require(rgrass7))
 		if (checkinstall=="FALSE") {
-				install.packages("GRANbase", dep=TRUE, lib=installib, repos='http://cran.us.r-project.org')
+				install.packages("rgrass7", dep=TRUE, lib=installib, repos='http://cran.us.r-project.org')
 				library(rgrass7)
 		} else {library(rgrass7)}
 	} else {

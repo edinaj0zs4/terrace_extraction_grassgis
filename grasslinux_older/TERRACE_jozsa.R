@@ -37,7 +37,7 @@ if (Sys.info()["sysname"] != "Windows") {
 	if (grassversion == 7) {
 			checkinstall <- suppressWarnings(require(rgrass7))
 		if (checkinstall=="FALSE") {
-				install.packages("rgrass7", dep=TRUE, lib=installib, repos='http://cran.us.r-project.org')
+				install.packages("GRANbase", dep=TRUE, lib=installib, repos='http://cran.us.r-project.org')
 				library(rgrass7)
 		} else {library(rgrass7)}
 	} else {
@@ -69,6 +69,7 @@ if (Sys.info()["sysname"] != "Windows") {
 #
 #
 ##Read data from maps as data.table
+##execGRASS("r.stats", input=c(ELEVATION,SLOPE,WATERCOURSE), output="tempout.txt", separator="space", flags=c("1", "g", "N", "overwrite")) #exporting elevation, slope and watercourse altitude values, omitting cells with missing data
 VALUES <- fread("tempout.txt", header=FALSE, sep=" ", col.names=c("X","Y","ELEVATION","SLOPE","WATERCOURSE"), na.strings="*") #read data in data.table and name columns
 #
 ##Prepare data
@@ -95,10 +96,12 @@ if (FLOWDIR == "NS" | FLOWDIR == "SN") {
         DISTANCE.calc[i+1] <- DISTANCE.calc[i] + sqrt((WATERCOURSE.data[i+1,"X"]-WATERCOURSE.data[i,"X"])^2 + (WATERCOURSE.data[i+1,"Y"]-WATERCOURSE.data[i,"Y"])^2)
         }
     if (WATERCOURSE.data[1,"WATERCOURSE_STRAIGHT"] > WATERCOURSE.data[.N,"WATERCOURSE_STRAIGHT"]){
+	DISTANCE.calc <- as.numeric(DISTANCE.calc) ##2021 - list to numeric
     DISTANCE.calc <- DISTANCE.calc[order(-DISTANCE.calc)]}
-    WATERCOURSE.data[, DISTANCE:=DISTANCE.calc]
+    WATERCOURSE.data[, DISTANCE:=as.numeric(DISTANCE.calc)] ##2021 - list to numeric
     VALUES <- merge(VALUES, WATERCOURSE.data[,c("Y","DISTANCE", "WATERCOURSE_STRAIGHT")], by="Y")
-    VALUES <- VALUES[, RELEV:=ELEVATION-WATERCOURSE_STRAIGHT] #calculate relative elevations above watercourse
+    VALUES <- VALUES[, RELEV:=ELEVATION-WATERCOURSE_STRAIGHT][RELEV < 0, RELEV:=0] #calculate relative elevations above watercourse
+	VALUES <- VALUES[RELEV > 2] ##2021 - test to remove 0 relative elevation
     } else {
     WATERCOURSE.data[, WATERCOURSE_STRAIGHT:=mean(WATERCOURSE), by=X] #handle meandering watercourse
     WATERCOURSE.data <- WATERCOURSE.data[!duplicated(WATERCOURSE.data$X), ]
@@ -114,14 +117,17 @@ if (FLOWDIR == "NS" | FLOWDIR == "SN") {
         DISTANCE.calc[i+1] <- DISTANCE.calc[i] + sqrt((WATERCOURSE.data[i+1,"X"]-WATERCOURSE.data[i,"X"])^2 + (WATERCOURSE.data[i+1,"Y"]-WATERCOURSE.data[i,"Y"])^2)
         }
     if (WATERCOURSE.data[1,"WATERCOURSE_STRAIGHT"] > WATERCOURSE.data[.N,"WATERCOURSE_STRAIGHT"]){
+	DISTANCE.calc <- as.numeric(DISTANCE.calc) ##2021 - list to numeric
     DISTANCE.calc <- DISTANCE.calc[order(-DISTANCE.calc)]}
-    WATERCOURSE.data[, DISTANCE:=DISTANCE.calc]
+    WATERCOURSE.data[, DISTANCE:=as.numeric(DISTANCE.calc)] ##2021 - list to numeric
     VALUES <- merge(VALUES, WATERCOURSE.data[,c("X","DISTANCE", "WATERCOURSE_STRAIGHT")], by="X")
     VALUES <- VALUES[, RELEV:=ELEVATION-WATERCOURSE_STRAIGHT][RELEV < 0, RELEV:=0] #calculate relative elevations above watercourse
+	VALUES <- VALUES[RELEV > 2] ##2021 - test to remove 0 relative elevation
     }
 #
 VALUES[, RELEV:=round(RELEV, digits=0)] #slope characteristics shall be analysed per every meter
 VALUES[, SLOPE:=round(SLOPE, digits=1)] #filtered slopes are rounded to one 
+#
 ##Recalculate coordinates if azimuth was set *calculation based on Telbisz, T. et al. 2011 SwathCalc tool
 FLOWDIR_DICT <- data.table(USER=c("NS","SN","EW","WE"), FROMNORTH=c(0,180,90,270)) # Always rotate the map to north, better handling further on
 if (AZIMUTH != 999){
@@ -158,15 +164,17 @@ if (AZIMUTH != 999){
         VALUES$OLD_Y <- VALUES$Y
         VALUES$X <- round(px.new + centerx, digits=1)
         VALUES$Y <- round(py.new + centery, digits=1)
-    }
+    }else{
+		VALUES$OLD_X <- VALUES$X ##keep coordinates 2021
+        VALUES$OLD_Y <- VALUES$Y ##keep coordinates 2021
+	}
 }
 #
 ###Defining thresholds of area and mean slope for altitudes based on topography of total study area
 ##Selecting cells with slope less than 13% and finding area ratio for potential/flat elevations
-#Subset data if there was an altitude limit set for the terrace extraction
-if (LIMIT != 999){ 
+#Subset data with the altitude limit set for the terrace extraction ##2021 - changed to required as it makes more sense
 RELEV_ALL <- VALUES[ELEVATION <= LIMIT, .N, by=RELEV]
-RELEV_FLAT <- VALUES[ELEVATION <= LIMIT & SLOPE <= 13, .(.N, mean(SLOPE), sd(SLOPE)), by=RELEV]}
+RELEV_FLAT <- VALUES[ELEVATION <= LIMIT & SLOPE <= 13, .(.N, mean(SLOPE), sd(SLOPE)), by=RELEV]
 #
 setkey(RELEV_FLAT, RELEV)[RELEV_ALL, RATE:=N/RELEV_ALL$N*100] #based on the RELEV values the proportion of flat cells in a given altitude is calculated
 setnames(RELEV_FLAT, old=c("RELEV","COUNT","MEAN","SD","RATE"))
@@ -240,7 +248,8 @@ AREAxmax <- max(VALUES$X, na.rm=TRUE)
 AREAxmin <- min(VALUES$X, na.rm=TRUE)
 AREAymax <- max(VALUES$Y, na.rm=TRUE)
 AREAymin <- min(VALUES$Y, na.rm=TRUE)
-section <- 330 # hardcoded based on trial-and-error method
+section <- 330 / RESOLUTION
+section <- RESOLUTION * round(section) #to be around 330 meters depending on resolution, hardcoded based on trial-and-error method 2021
 piece <- (round((AREAymax-AREAymin)/section)+1)*2 # overlapping cutting
 #
 #Updating data.table with the results of terrace extraction

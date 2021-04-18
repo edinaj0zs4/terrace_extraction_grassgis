@@ -77,9 +77,8 @@ In: Geomorphology 91 (1-2), pp. 51-64.
 #%option
 #% key: limit
 #% type: integer
-#% answer: 999
 #% description: Altitude limit for terrace extraction (meter a.s.l.)
-#% required : no
+#% required : yes
 #% guisection: Elevation
 #%end
 
@@ -250,7 +249,7 @@ def main():
 
     limit = int(options['limit'])
 
-### Prepare watercourse
+### Prepare watercourse - updated in 2021
     watercourse = str(options['raster_water']).split('@')[0]
     azimuth = int(options['azimuth'])
     ## Select which bank to analyse
@@ -258,7 +257,7 @@ def main():
     right = flags['r']
     dir = str(options['flowdir'])
     if left or right:
-        grass.run_command('g.region', rast=watercourse)
+        grass.run_command('g.region', zoom=watercourse)
         waterarea = grass.region(watercourse)
         grass.run_command('g.region', rast=elevation)
         elevarea = grass.region(elevation)
@@ -288,13 +287,13 @@ def main():
                 Ww = int(waterarea.w)
                 grass.run_command('g.region', n=Nw, s=Se, e=Ew, w=Ww, flags='a')
             area = str('temp_' + elevation + '_div')
-            grass.mapcalc('$outmap = if($watercourse > 0, null(), $elevation / $elevation)', outmap=area, watercourse=watercourse, elevation=elevation)
+            grass.mapcalc('$outmap = if(isnull($watercourse) == 1, 1, null())', outmap=area, watercourse=watercourse, elevation=elevation)
             clump = str('temp_' + area + '_clump')
-            grass.run_command('r.clump', input=area, output=clump, flags='d')
+            grass.run_command('r.clump', input=area, output=clump)
             value = grass.read_command('r.stats', input=clump, flags='cn', sort='desc')
             value = value.split()
             value = value[0]
-            side_elev = str(elevation + '_right')
+            side_elev = str(elevation + '_left')
             grass.mapcalc('$outmap = if($clump == $value, $elevation, null())', outmap=side_elev, clump = clump, value = value, elevation = elevation)
             elevation = side_elev
         else: ## user set right side to analyse
@@ -323,16 +322,16 @@ def main():
                 Ww = int(waterarea.w)
                 grass.run_command('g.region', n=Ne, s=Sw, e=Ew, w=Ww, flags='a')
             area = str('temp_' + elevation + '_div')
-            grass.mapcalc('$outmap = if($watercourse > 0, null(), $elevation / $elevation)', outmap=area, watercourse=watercourse, elevation=elevation)
+            grass.mapcalc('$outmap = if(isnull($watercourse) == 1, 1, null())', outmap=area, watercourse=watercourse, elevation=elevation)
             clump = str('temp_' + area + '_clump')
-            grass.run_command('r.clump', input=area, output=clump, flags='d')
+            grass.run_command('r.clump', input=area, output=clump)
             value = grass.read_command('r.stats', input=clump, flags='cn', sort='desc')
             value = value.split()
             value = value[0]
             side_elev = str(elevation + '_right')
             grass.mapcalc('$outmap = if($clump == $value, $elevation, null())', outmap=side_elev, clump=clump, value=value, elevation=elevation)
             elevation = side_elev
-
+            
 ### Set the area which should be exported by creating a MASK from the elevation and watercourse
     grass.run_command('g.region', rast=elevation)
     elevarea = grass.region(elevation)

@@ -1,4 +1,4 @@
-Topographic Grain
+Terrace Extraction
 ==================
 In this subfolder are the necessary files to use the script tool on GRASS GIS versions on Linux. (Tested on Ubuntu with 7.x.)
 - To the best of my knowledge it is up to date and works, but please compare the change date to the version in root.
